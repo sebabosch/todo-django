@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="pure-u-1-2"><h1>Editing task  "{{ obj.title }}"</h1></div>
+
+<div class="pure-u-1-2">
+
+	<div class="pure-u-1">
+		<div id="table"></div>
+		<form class="pure-form" method="POST">
+		{% csrf_token %} 
+		<fieldset>
+			{{ form }}
+			<td><a onclick="patch()" class="pure-button pure-button-primary" >Save</a></td>
+			<a href="{{ request.META.HTTP_REFERER }}"  class="pure-button " > Cancel </a>
+		</fieldset>
+		</form>
+	</div>
+	
+</div>
+<script>
+    function patch() {
+        $.ajax({
+            url: '/edit/{{ pk }}?type=title&data='+$("#id_title").val(),
+            type: 'PATCH',
+            success: function (result) {
+                // Do something with the result
+                 window.location.replace("/tasks/{{folder}}");
+            }
+        });
+    }
+</script>
+{% endblock %}

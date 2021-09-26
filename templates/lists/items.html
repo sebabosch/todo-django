@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="pure-u-1-2"><h1>Folders  > {{ folder }} </h1></div>
+
+<div class="pure-u-1-2">
+
+	<div class="table-responsive">
+		<table class="mq-table pure-table">
+		
+			<tbody>
+			{% for item in obj %}
+			<tr>
+				<td><input onclick="patch('{{ item.id }}','ok')" type="checkbox" id="scales" name="scales" {% if item.ok %}  checked  {% endif %}> </td>
+				<td class="highlight"> {{ item.title }} </td>
+				<td><a class="pure-button" href="/edit/{{ item.id }}">Edit</a></td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<div class="pure-u-1-2"><p>{{ obj|length }} Element(s)</p></div>
+	<div class="pure-u-1">
+		<div id="table"></div>
+		<form class="pure-form" method="POST">
+		{% csrf_token %} 
+		<fieldset>
+			{{ form }}
+			<button type="submit" class="pure-button pure-button-primary" disable="">Add</button>
+		</fieldset>
+		</form>
+	</div>
+	
+</div>
+<script>
+    function patch(pk,type) {
+        $.ajax({
+            url: '/edit/'+pk+"?type="+type,
+            type: 'PATCH',
+            success: function (result) {
+                // Do something with the result
+                window.location.replace("/tasks/{{folder}}");
+            }
+        });
+    }
+</script>
+{% endblock %}
