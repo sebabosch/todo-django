@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+.redb{
+	background: rgb(222, 77, 20);
+	color: white; 
+	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+div input {
+  border: none;
+  display: inline;
+  font-family: inherit;
+  font-size: inherit;
+  padding: none;
+  width: auto;
+  background-color: #d1d1d1; 
+}
+.edit{
+border: 1px solid;
+background-color: #ffffff; 
+}
+</style>
+<div class="pure-u-1-2"><h1>Folders</h1></div>
+
+<div class="pure-u-1-2">
+	<div class="table-responsive">
+		<table id="Folders" class="mq-table pure-table">
+			
+				<tr>
+				<td colspan=4>
+					<form class="pure-form" method="POST">
+					{% csrf_token %} 
+					<fieldset>
+					
+						{{ form.as_p }}
+						<div><a onclick="addF(event)" class="pure-button pure-button-primary" disable="">Add Folder</a></div>
+					
+					</fieldset>
+					</form>
+				</td>
+				</tr>
+			
+		</table>
+	</div>
+</div>
+
+<div class="pure-u-1-2">
+	<div class="table-responsive">
+		<table id="Items" class="mq-table pure-table">
+
+
+		</table>
+	</div>
+	<div class="pure-u-1">
+		<div id="table"></div>
+
+	</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+<script>
+    $(document).ready(function(){
+        var csrftoken = Cookies.get('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+    });
+</script>
+<script>
+	function send(event,type,url,getdata="",postdata={}){
+		$.ajax({
+			url: '/'+url+"/?"+getdata,
+			type: type,
+			data:postdata,
+			success: function (r) {
+				// Do something with the result
+				if (r.result == 'ok'){
+					safe[r.func](event,r.data);
+				}
+			}
+		});
+	}
+	function SafeClass(event){
+		//Kind of templates
+		const Folder = item => `<tr id="F${item.title}"><td></td><td class="highlight"> ${item.title} </td>
+							<td><a class="pure-button" onclick="send(event,\'GET\',\'folder/${ item.title }\')">View Items</a></td>
+							<td><a class="pure-button redb" onclick="send(event,\'DELETE\',\'folder/${ item.title }\')" >Remove</a></td></tr>
+`;
+		const Item = item => `<tr><td><input id="O${ item.id }" onclick="send(event,\'PATCH\',\'task/${ item.id }\',\'type=ok\')" type="checkbox" ${item.ok} id="scales" name="scales" ></td>
+							<td><input type="tag" id="I${ item.id }" value="${ item.title }" readonly></td>
+							<td><a class="pure-button" onclick="edit(event,0,\'${ item.id }\')">Edit</a>
+							<a hidden class="pure-button pure-button-primary" onclick="edit(event,1,\'${ item.id }\')">Done</a></td></tr>`
+							
+		this.listFolder = function(event,data){
+			
+			//Map variables to template, can be updated
+			const markup = data.obj.map(Folder).join('');
+			$('#Folders').prepend(markup);
+			
+		}
+		this.listItem = function(event,data){
+			$("#Items").remove();
+			var markup = '<tr id="Items"><td colspan=4 ><table class="mq-table pure-table">'
+			markup += data.obj.map(Item).join('');
+			markup += `<tr><td colspan=4>
+					<form class="pure-form" method="POST">
+					{% csrf_token %} 
+					<fieldset>
+						<input type="text" name="title" maxlength="30" required="" id="id_item">
+						<div><a onclick="addI(event,\'${data.target}\')" class="pure-button pure-button-primary" disable="">Add Item</a></div>
+					</fieldset>	</form>	</td></tr>`
+			$('#F'+event.target.nodeName).after(markup);
+			console.log(event.parentNode)
+		}
+		this.itemPatch = function(event,data){
+			$("#O"+data.pk).attr("checked",data.ok);
+		}
+		this.rm = function(event,data){
+			$("#"+data.target).remove();
+		}
+		this.add = function(event,data){
+			const markup = data.obj.map(Folder).join('');
+			$("#"+data.target).prepend(markup)
+		}
+	}
+	function start(){
+		send(event,"GET","folder")
+	}
+	function addF(event){
+		send(event,"POST","folder","",{'title':$('#id_title').val()})
+	}
+	function addI(event,folder){
+	
+		send(event,"POST","folder/"+folder,"",{'title':$('#id_item').val()})
+	}
+	function edit(event,done,id){
+		if (done){
+			if (!patch(event,"PATCH","task/"+id+"/?type=title&data="+$("#O"+data.id).val()))return
+			$('#I'+id).attr("readonly",true);
+			$('#I'+id).removeClass("edit");
+			event.target.setAttribute("hidden",true);
+			event.target.parentNode.children[0].removeAttribute("hidden"); 
+		}else{
+			$('#I'+id).removeAttr("readonly");
+			$('#I'+id).addClass("edit");
+			event.target.setAttribute("hidden",true);
+			event.target.parentNode.children[1].removeAttribute("hidden"); 
+		}
+	}
+	$( document ).ready( start );
+	var safe = new SafeClass()
+
+</script>
+{% endblock %}

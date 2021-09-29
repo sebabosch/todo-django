@@ -1,18 +1,9 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<div class="pure-u-1-2"><h1>Folders</h1></div>
-
 <div class="pure-u-1-2">
 	<div class="table-responsive">
 		<table class="mq-table pure-table">
 			<tbody>
-			{% for item in obj %}
-			<tr>
-				<td class="highlight"> {{ item.title }} </td>
-				<td><a class="pure-button" href="/tasks/{{ item.title }}">View Items</a></td>
-				<td><a class="pure-button" style="background: rgb(222, 77, 20); color: white; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);" onclick="del('{{ item.title }}')" >Remove</a></td>
-			</tr>
+			{% for item in data %}
+			{% include folderitem.html %}
 			{% endfor %}
 			</tbody>
 		</table>
@@ -28,28 +19,3 @@
 		</form>
 	</div>
 </div>
-<script>
-    function PUTrequest() {
-        $.ajax({
-            url: '{{ item.title }}',
-            type: 'PUT',
-            success: function (result) {
-                // Do something with the result
-                alert(result.data);
-            }
-        });
-    }
-  
-    function del(folder) {
-		if(!confirm('Are you sure to delete it?'))return;
-        $.ajax({
-            url: "/folders/"+folder,
-            type: 'DELETE',
-            success: function (result) {
-                // Do something with the result
-                location.reload();
-            }
-        });
-    }
-</script>
-{% endblock %}
