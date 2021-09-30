@@ -22,15 +22,15 @@ class FolderView(APIView):
 	def get(self,request):
 		#Get Folder list
 		queryset = Folder.objects.all()
-		serializer_class = FolderSerializer(queryset, many=True)
-		return Response({'result':'ok','func':'listFolder','data':{'target':'Folders','obj':serializer_class.data}})#, 'form': form})
+		serializer = FolderSerializer(queryset, many=True)
+		return Response({'result':'ok','func':'listFolder','data':{'target':'Folders','obj':serializer.data}})#, 'form': form})
 		#return Response({"obj":obj, 'form': form})
 	def post(self,request,*args, **kwargs):
 		
 		serializer = FolderSerializer(data=request.POST)
 		if serializer.is_valid():
 			serializer.save()
-			return Response({'result':'ok','func':'add','data':{'target':'Folders','obj':[serializer.validated_data]}})#, 'form': form})
+			return Response({'result':'ok','func':'add','data':{'target':'Folder','obj':[serializer.validated_data]}})#, 'form': form})
 		return Response({'result':'not_ok',})#, 'form': form})
 		# True
 		
@@ -55,17 +55,22 @@ class ItemView(APIView):
 	
 	def post(self,request,folder, **kwargs):
 		serializer = ItemSerializer(data=request.POST)
+		
 		if serializer.is_valid():
+			#serializer.validated_data.folder =  Folder.objects.get(title=folder)
 			serializer.save()
-			return Response({'result':'ok','func':'add','data':{'target':'Items','obj':[serializer.validated_data]}})#, 'form': form})
-		return Response({'result':'not_ok',})#, 'form': form})
+			obj={'folder':folder}
+			obj.update(serializer.data)
+			
+			return Response({'result':'ok','func':'add','data':{'target':'Item','obj':[obj]}})#, 'form': form})
+		return Response({'result':'not_ok','error':serializer.errors})#, 'form': form})
 		# True
 
-	
+
 class ItemEdit(APIView):
 	#renderer_classes = [TemplateHTMLRenderer]
 	template_name = 'edit.html'
-	
+
 	def get(self,request,pk, **kwargs):
 		obj = Item.objects.get(id=pk)
 		form = ItemForm(initial={"title":obj.title})

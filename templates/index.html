@@ -86,7 +86,8 @@ background-color: #ffffff;
 				// Do something with the result
 				if (r.result == 'ok'){
 					safe[r.func](event,r.data);
-				}
+					return 0
+				}else{ return 1}
 			}
 		});
 	}
@@ -100,7 +101,8 @@ background-color: #ffffff;
 							<td><input type="tag" id="I${ item.id }" value="${ item.title }" readonly></td>
 							<td><a class="pure-button" onclick="edit(event,0,\'${ item.id }\')">Edit</a>
 							<a hidden class="pure-button pure-button-primary" onclick="edit(event,1,\'${ item.id }\')">Done</a></td></tr>`
-							
+		this.Item = Item
+		this.Folder = Folder
 		this.listFolder = function(event,data){
 			
 			//Map variables to template, can be updated
@@ -110,7 +112,7 @@ background-color: #ffffff;
 		}
 		this.listItem = function(event,data){
 			$("#Items").remove();
-			var markup = '<tr id="Items"><td colspan=4 ><table class="mq-table pure-table">'
+			var markup = '<tr id="Items"><td colspan=4 ><table id="ItemA" class="mq-table pure-table">'
 			markup += data.obj.map(Item).join('');
 			markup += `<tr><td colspan=4>
 					<form class="pure-form" method="POST">
@@ -119,18 +121,28 @@ background-color: #ffffff;
 						<input type="text" name="title" maxlength="30" required="" id="id_item">
 						<div><a onclick="addI(event,\'${data.target}\')" class="pure-button pure-button-primary" disable="">Add Item</a></div>
 					</fieldset>	</form>	</td></tr>`
-			$('#F'+event.target.nodeName).after(markup);
-			console.log(event.parentNode)
+			$('#F'+data.target).after(markup);
 		}
 		this.itemPatch = function(event,data){
 			$("#O"+data.pk).attr("checked",data.ok);
+			$('#I'+data.target).attr("readonly",true);
+			$('#I'+data.target).removeClass("edit");
+			event.target.setAttribute("hidden",true);
+			event.target.parentNode.children[0].removeAttribute("hidden"); 
 		}
 		this.rm = function(event,data){
+			$("#Items").remove();
 			$("#"+data.target).remove();
 		}
 		this.add = function(event,data){
-			const markup = data.obj.map(Folder).join('');
-			$("#"+data.target).prepend(markup)
+			const markup = data.obj.map(safe[data.target]).join('');
+			if (data.target=="Item"){
+				$("#ItemA").prepend(markup)
+				$("#id_item").val("")
+			}else{
+				$("#Folders").prepend(markup)
+				$("#id_title").val("")
+			}
 		}
 	}
 	function start(){
@@ -140,16 +152,11 @@ background-color: #ffffff;
 		send(event,"POST","folder","",{'title':$('#id_title').val()})
 	}
 	function addI(event,folder){
-	
-		send(event,"POST","folder/"+folder,"",{'title':$('#id_item').val()})
+		send(event,"POST","folder/"+folder,"",{'title':$('#id_item').val(),'folder':folder})
 	}
 	function edit(event,done,id){
 		if (done){
-			if (!patch(event,"PATCH","task/"+id+"/?type=title&data="+$("#O"+data.id).val()))return
-			$('#I'+id).attr("readonly",true);
-			$('#I'+id).removeClass("edit");
-			event.target.setAttribute("hidden",true);
-			event.target.parentNode.children[0].removeAttribute("hidden"); 
+			send(event,"PATCH","task/"+id,"type=title&data="+$("#I"+id).val())
 		}else{
 			$('#I'+id).removeAttr("readonly");
 			$('#I'+id).addClass("edit");
